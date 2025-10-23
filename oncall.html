@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unified Amdocs Oncall Portal Notifier</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #ecf0f1;
+    }
+    header {
+      background-color: #1abc9c;
+      padding: 20px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      background-color: #2c3e50;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,255,255,0.2);
+    }
+    select, button, input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+    }
+    select, input {
+      background-color: #34495e;
+      color: #ecf0f1;
+    }
+    button {
+      background-color: #1abc9c;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #16a085;
+    }
+    .section {
+      margin-top: 30px;
+      background-color: #34495e;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .section h3 {
+      margin-top: 0;
+      color: #1abc9c;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #7f8c8d;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #1abc9c;
+      color: white;
+    }
+    a {
+      color: #1abc9c;
+      text-decoration: underline;
+    }
+    .glow {
+      animation: glow 1.5s infinite alternate;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 10px #1abc9c; }
+      to { box-shadow: 0 0 20px #1abc9c; }
+    }
+  </style>
+</head>
+<body>
+  <header>Unified Amdocs Oncall Portal Notifier</header>
+  <div class="container">
+    <div class="section glow">
+      <h3>🔍 Select Team</h3>
+      <select id="teamSelect">
+        <option value="">-- Choose a Team --</option>
+        <option value="TeamA">Team A</option>
+        <option value="TeamB">Team B</option>
+        <option value="TeamC">Team C</option>
+      </select>
+      <label for="sharepointInput"><strong>🔗 Enter SharePoint Link:</strong></label>
+      <input type="text" id="sharepointInput" placeholder="https://sharepoint.example.com/sites/oncall-teamA">
+      <button onclick="updateSharePointLink()">Update Link</button>
+    </div>
+
+    <div class="section">
+      <h3>📊 Team Details</h3>
+      <p><strong>Today's On-Call Employees:</strong> <span id="onCallList">[List will appear here]</span></p>
+      <p><strong>Team Leader:</strong> <span id="tlInfo">Name / Email</span></p>
+      <p><strong>Manager:</strong> <span id="managerInfo">Name / Email</span></p>
+      <p><strong>Line Manager:</strong> <span id="lineManagerInfo">Name / Email</span></p>
+      <p><strong>SharePoint Link:</strong> <span id="sharepointDisplay">[No link provided]</span></p>
+    </div>
+
+    <div class="section">
+      <h3>📅 Calendar View</h3>
+      <table id="calendarTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Employees Working (Name & Email)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h3>📨 Send Reminder</h3>
+      <button onclick="sendReminder('GL')">Reminder 1: Notify Group Leader</button>
+      <button onclick="sendReminder('Manager')">Reminder 2: Notify Manager</button>
+      <button onclick="sendReminder('LineManager')">Reminder 3: Notify Line Manager</button>
+    </div>
+  </div>
+
+  <script>
+  const teamData = {
+    TeamA: {
+      onCall: "Alice, Bob",
+      tl: "John Doe / john.doe@example.com",
+      manager: "Jane Smith / jane.smith@example.com",
+      lineManager: "Mark Lee / mark.lee@example.com",
+      calendar: {
+        "2025-10-23": [{ name: "Alice", email: "alice@example.com" }],
+        "2025-10-24": [{ name: "Bob", email: "bob@example.com" }],
+        "2025-10-25": [
+          { name: "Alice", email: "alice@example.com" },
+          { name: "Bob", email: "bob@example.com" }
+        ]
+      }
+    },
+    TeamB: {
+      onCall: "Charlie, Dana",
+      tl: "Emily Clark / emily.clark@example.com",
+      manager: "Tom Ray / tom.ray@example.com",
+      lineManager: "Sara Kim / sara.kim@example.com",
+      calendar: {
+        "2025-10-23": [{ name: "Charlie", email: "charlie@example.com" }],
+        "2025-10-24": [{ name: "Dana", email: "dana@example.com" }],
+        "2025-10-25": [
+          { name: "Charlie", email: "charlie@example.com" },
+          { name: "Dana", email: "dana@example.com" }
+        ]
+      }
+    },
+    TeamC: {
+      onCall: "Eve, Frank",
+      tl: "Luke Shaw / luke.shaw@example.com",
+      manager: "Nina Patel / nina.patel@example.com",
+      lineManager: "Oscar Lin / oscar.lin@example.com",
+      calendar: {
+        "2025-10-23": [{ name: "Eve", email: "eve@example.com" }],
+        "2025-10-24": [{ name: "Frank", email: "frank@example.com" }],
+        "2025-10-25": [
+          { name: "Eve", email: "eve@example.com" },
+          { name: "Frank", email: "frank@example.com" }
+        ]
+      }
+    }
+  };
+
+  let sharepointLinks = {
+    TeamA: "https://sharepoint.example.com/sites/oncall-teamA",
+    TeamB: "https://sharepoint.example.com/sites/oncall-teamB",
+    TeamC: "https://sharepoint.example.com/sites/oncall-teamC"
+  };
+
+  function updateSharePointLink() {
+    const team = document.getElementById('teamSelect').value;
+    const link = document.getElementById('sharepointInput').value;
+    if (team && link) {
+      sharepointLinks[team] = link;
+      document.getElementById('sharepointDisplay').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+    }
+  }
+
+  document.getElementById('teamSelect').addEventListener('change', function () {
+    const team = this.value;
+    if (teamData[team]) {
+      document.getElementById('onCallList').textContent = teamData[team].onCall;
+      document.getElementById('tlInfo').textContent = teamData[team].tl;
+      document.getElementById('managerInfo').textContent = teamData[team].manager;
+      document.getElementById('lineManagerInfo').textContent = teamData[team].lineManager;
+      document.getElementById('sharepointDisplay').innerHTML = `<a href="${sharepointLinks[team]}" target="_blank">${sharepointLinks[team]}</a>`;
+
+      const calendarBody = document.querySelector('#calendarTable tbody');
+      calendarBody.innerHTML = '';
+      const calendar = teamData[team].calendar;
+
+      for (const date in calendar) {
+        const row = document.createElement('tr');
+
+        const dateCell = document.createElement('td');
+        dateCell.textContent = date;
+        row.appendChild(dateCell);
+
+        const namesCell = document.createElement('td');
+        const emailsCell = document.createElement('td');
+
+        const names = calendar[date].map(person => person.name).join(', ');
+        const emails = calendar[date].map(person => person.email).join(', ');
+
+        namesCell.textContent = names;
+        emailsCell.textContent = emails;
+
+        row.appendChild(namesCell);
+        row.appendChild(emailsCell);
+
+        calendarBody.appendChild(row);
+      }
+    }
+  });
+</script>
